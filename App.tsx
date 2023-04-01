@@ -6,7 +6,6 @@
  */
 
 import React, {useState} from 'react';
-import type {PropsWithChildren} from 'react';
 import {
   Button,
   SafeAreaView,
@@ -19,50 +18,15 @@ import {
   View,
 } from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
-
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
-
-function Section({children, title}: SectionProps): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+import {Colors} from 'react-native/Libraries/NewAppScreen';
 
 interface BuySellEntryProps {
-  buySellType?: BuySellType;
-  transactionDate?: Date;
-  stockName?: string;
-  stockPrice?: number;
-  stockCount?: number;
+  buySellType?: BuySellType; // 산 건지 판 건지
+  transactionDate?: Date; // 언제
+  stockName?: string; // 어떤 종목을
+  stockPrice?: number; // 얼마에
+  stockCount?: number; // 몇 주나
+  earn?: number; // 매도로 인해 얼마나 벌었는지
 }
 
 interface NewBuySellEntryProps extends BuySellEntryProps {
@@ -177,15 +141,21 @@ interface SummaryEntryProps {
   stockName: string;
   stockCount: number;
   accumPrice: number;
+  accumBuyCount: number;
+  accumSellCount: number;
 }
 
 function SummaryEntry(props: SummaryEntryProps): JSX.Element {
-  const avgPriceStr = (props.accumPrice / props.stockCount).toLocaleString(
-    'ko',
-    {
-      maximumFractionDigits: 0,
-    },
-  );
+  const avgPrice = props.accumPrice / props.stockCount;
+  const avgPriceStr = avgPrice.toLocaleString('ko', {
+    maximumFractionDigits: 0,
+  });
+  const curPrice = 1000;
+
+  const fixedIncome = props.accumSellCount * (curPrice - avgPrice);
+  const fixedIncomeStr = fixedIncome.toLocaleString('ko', {
+    maximumFractionDigits: 0,
+  });
 
   return (
     <View style={styles.colContainer}>
@@ -199,7 +169,7 @@ function SummaryEntry(props: SummaryEntryProps): JSX.Element {
         <Text style={styles.flexHalf}>{props.stockCount}주</Text>
         <Text style={styles.flexOne}>현재가: 00,000원</Text>
         <Text style={styles.flexOne}>+123,456원</Text>
-        <Text style={styles.flexOne}>확정: +123,456원</Text>
+        <Text style={styles.flexOne}>확정: {fixedIncomeStr}원</Text>
       </View>
     </View>
   );
@@ -212,6 +182,8 @@ function Summary(props: SummaryProps): JSX.Element {
         stockName={e[1].stockName}
         stockCount={e[1].stockCount}
         accumPrice={e[1].accumPrice}
+        accumBuyCount={e[1].accumBuyCount}
+        accumSellCount={e[1].accumSellCount}
       />
     );
   });
@@ -226,6 +198,26 @@ function BuySellHistory(): JSX.Element {
   >(new Map());
 
   function addFunc(entryProps: BuySellEntryProps) {
+    if (!entryProps.stockName || !entryProps.stockCount || !entryProps.stockPrice) {
+      console.error('입력 값 잘못됨');
+      return;
+    }
+
+    if (entryProps.stockPrice <= 0 || entryProps.stockCount <= 0) {
+      console.error('음수 입력 불가');
+      return;
+    }
+
+    // 가진 것보다 더 팔 수는 없지?
+    if (
+      entryProps.buySellType === BuySellType.Sell &&
+      (summaryDict.get(entryProps.stockName)?.stockCount || 0) <
+        entryProps.stockCount
+    ) {
+      console.error('가진 것보다 더 팔 수 없음');
+      return;
+    }
+
     const newHistoryList = [...historyList, entryProps];
     setHistoryList(newHistoryList);
 
@@ -236,18 +228,22 @@ function BuySellHistory(): JSX.Element {
         return;
       }
 
-      let summaryEntry = newSummaryDict.get(e.stockName) || {
+      let summaryEntry: SummaryEntryProps = newSummaryDict.get(e.stockName) || {
         stockName: e.stockName,
         stockCount: 0,
         accumPrice: 0,
+        accumBuyCount: 0,
+        accumSellCount: 0,
       };
 
       if (e.buySellType === BuySellType.Buy) {
         summaryEntry.stockCount += e.stockCount;
         summaryEntry.accumPrice += e.stockCount * e.stockPrice;
+        summaryEntry.accumBuyCount += e.stockCount;
       } else if (e.buySellType === BuySellType.Sell) {
         summaryEntry.stockCount -= e.stockCount;
         summaryEntry.accumPrice -= e.stockCount * e.stockPrice;
+        summaryEntry.accumSellCount += e.stockCount;
       }
 
       newSummaryDict.set(e.stockName, summaryEntry);
@@ -297,26 +293,6 @@ function App(): JSX.Element {
         style={backgroundStyle}>
         <Text style={styles.sectionTitle}>잔고</Text>
         <BuySellHistory />
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
       </ScrollView>
     </SafeAreaView>
   );

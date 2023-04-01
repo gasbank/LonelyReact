@@ -170,7 +170,7 @@ function NewBuySellEntry(props: NewBuySellEntryProps): JSX.Element {
 }
 
 interface SummaryProps {
-  historyList: BuySellEntryProps[];
+  summaryDict: Map<string, SummaryEntryProps>;
 }
 
 interface SummaryEntryProps {
@@ -180,47 +180,33 @@ interface SummaryEntryProps {
 }
 
 function SummaryEntry(props: SummaryEntryProps): JSX.Element {
+  const avgPriceStr = (props.accumPrice / props.stockCount).toLocaleString(
+    'ko',
+    {
+      maximumFractionDigits: 0,
+    },
+  );
+
   return (
-    <>
-      <Text>{props.stockName}</Text>
-      <Text>{props.stockCount}주</Text>
-      <Text>
-        평단가:{' '}
-        {(props.accumPrice / props.stockCount).toLocaleString('ko', {
-          maximumFractionDigits: 0,
-        })}
-        원
-      </Text>
-    </>
+    <View style={styles.colContainer}>
+      <View style={styles.rowContainer}>
+        <Text style={styles.flexHalf}>{props.stockName}</Text>
+        <Text style={styles.flexOne}>평단가: {avgPriceStr}원</Text>
+        <Text style={styles.flexOne}>+12.34%</Text>
+        <Text style={styles.flexOne}>확정: +12.34%</Text>
+      </View>
+      <View style={styles.rowContainer}>
+        <Text style={styles.flexHalf}>{props.stockCount}주</Text>
+        <Text style={styles.flexOne}>현재가: 00,000원</Text>
+        <Text style={styles.flexOne}>+123,456원</Text>
+        <Text style={styles.flexOne}>확정: +123,456원</Text>
+      </View>
+    </View>
   );
 }
 
 function Summary(props: SummaryProps): JSX.Element {
-  const historyDict = new Map<string, SummaryEntryProps>();
-
-  props.historyList.forEach(e => {
-    if (!e.stockName || !e.stockCount || !e.stockPrice) {
-      return;
-    }
-
-    let summaryEntry = historyDict.get(e.stockName) || {
-      stockName: e.stockName,
-      stockCount: 0,
-      accumPrice: 0,
-    };
-
-    if (e.buySellType === BuySellType.Buy) {
-      summaryEntry.stockCount += e.stockCount;
-      summaryEntry.accumPrice += e.stockCount * e.stockPrice;
-    } else if (e.buySellType === BuySellType.Sell) {
-      summaryEntry.stockCount -= e.stockCount;
-      summaryEntry.accumPrice -= e.stockCount * e.stockPrice;
-    }
-
-    historyDict.set(e.stockName, summaryEntry);
-  });
-
-  const historyEntryList = Array.from(historyDict.entries()).map(e => {
+  const historyEntryList = Array.from(props.summaryDict.entries()).map(e => {
     return (
       <SummaryEntry
         stockName={e[1].stockName}
@@ -235,14 +221,44 @@ function Summary(props: SummaryProps): JSX.Element {
 
 function BuySellHistory(): JSX.Element {
   const [historyList, setHistoryList] = useState<BuySellEntryProps[]>([]);
+  const [summaryDict, setSummaryDict] = useState<
+    Map<string, SummaryEntryProps>
+  >(new Map());
 
   function addFunc(entryProps: BuySellEntryProps) {
-    setHistoryList([...historyList, entryProps]);
+    const newHistoryList = [...historyList, entryProps];
+    setHistoryList(newHistoryList);
+
+    const newSummaryDict = new Map<string, SummaryEntryProps>();
+
+    newHistoryList.forEach(e => {
+      if (!e.stockName || !e.stockCount || !e.stockPrice) {
+        return;
+      }
+
+      let summaryEntry = newSummaryDict.get(e.stockName) || {
+        stockName: e.stockName,
+        stockCount: 0,
+        accumPrice: 0,
+      };
+
+      if (e.buySellType === BuySellType.Buy) {
+        summaryEntry.stockCount += e.stockCount;
+        summaryEntry.accumPrice += e.stockCount * e.stockPrice;
+      } else if (e.buySellType === BuySellType.Sell) {
+        summaryEntry.stockCount -= e.stockCount;
+        summaryEntry.accumPrice -= e.stockCount * e.stockPrice;
+      }
+
+      newSummaryDict.set(e.stockName, summaryEntry);
+    });
+
+    setSummaryDict(newSummaryDict);
   }
 
   return (
     <>
-      <Summary historyList={historyList} />
+      <Summary summaryDict={summaryDict} />
 
       <Text style={styles.sectionTitle}>기록</Text>
 
@@ -279,7 +295,7 @@ function App(): JSX.Element {
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
         style={backgroundStyle}>
-        <Text>설마 이것도 바로 되는 건가?</Text>
+        <Text style={styles.sectionTitle}>잔고</Text>
         <BuySellHistory />
         <Header />
         <View
@@ -332,8 +348,16 @@ const styles = StyleSheet.create({
     padding: 5,
     flexDirection: 'row',
   },
+  colContainer: {
+    flex: 1,
+    padding: 0,
+    flexDirection: 'column',
+  },
   flexOne: {
     flex: 1,
+  },
+  flexHalf: {
+    flex: 0.5,
   },
 });
 

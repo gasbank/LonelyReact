@@ -77,30 +77,25 @@ function BuySellEntry(props: BuySellEntryProps): JSX.Element {
       ? 'blue'
       : 'gray';
 
+  const entryStyle = {flex: 1, color: textColor};
+
   return (
     <>
-      <View style={[buySellStyles.container, {flexDirection: 'row'}]}>
-        <Text style={{flex: 1, color: textColor}}>
+      <View style={styles.rowContainer}>
+        <Text style={entryStyle}>
           {props.transactionDate?.toLocaleDateString('ko') || '---'}
         </Text>
-        <Text style={{flex: 1, color: textColor}}>{props.stockName}</Text>
-        <Text style={{flex: 1, color: textColor}}>
+        <Text style={entryStyle}>{props.stockName}</Text>
+        <Text style={entryStyle}>
           {props.stockPrice?.toLocaleString('ko')}원
         </Text>
-        <Text style={{flex: 1, color: textColor}}>
+        <Text style={entryStyle}>
           {props.stockCount?.toLocaleString('ko')}주
         </Text>
       </View>
     </>
   );
 }
-
-const buySellStyles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 5,
-  },
-});
 
 enum BuySellType {
   Buy = 1,
@@ -131,30 +126,30 @@ function NewBuySellEntry(props: NewBuySellEntryProps): JSX.Element {
 
   return (
     <>
-      <View style={[buySellStyles.container, {flexDirection: 'row'}]}>
+      <View style={styles.rowContainer}>
         <TextInput
           placeholder="종목명"
           value={stockName}
           onChangeText={v => setStockName(v)}
-          style={{flex: 1}}
+          style={styles.flexOne}
         />
         <TextInput
           placeholder="가격"
           value={stockPrice?.toString()}
           onChangeText={v => setStockPrice(parseInt(v, 10) || undefined)}
           keyboardType="number-pad"
-          style={{flex: 1}}
+          style={styles.flexOne}
         />
         <TextInput
           placeholder="수량"
           value={stockCount?.toString()}
           onChangeText={v => setStockCount(parseInt(v, 10) || undefined)}
           keyboardType="number-pad"
-          style={{flex: 1}}
+          style={styles.flexOne}
         />
       </View>
-      <View style={[buySellStyles.container, {flexDirection: 'row'}]}>
-        <View style={{flex: 1}}>
+      <View style={styles.rowContainer}>
+        <View style={styles.flexOne}>
           <Button
             title="매수"
             onPress={_ => onPress(BuySellType.Buy)}
@@ -162,7 +157,7 @@ function NewBuySellEntry(props: NewBuySellEntryProps): JSX.Element {
           />
         </View>
 
-        <View style={{flex: 1}}>
+        <View style={styles.flexOne}>
           <Button
             title="매도"
             onPress={_ => onPress(BuySellType.Sell)}
@@ -189,7 +184,13 @@ function SummaryEntry(props: SummaryEntryProps): JSX.Element {
     <>
       <Text>{props.stockName}</Text>
       <Text>{props.stockCount}주</Text>
-      <Text>평단가: {(props.accumPrice / props.stockCount).toLocaleString('ko', {maximumFractionDigits: 0})}원</Text>
+      <Text>
+        평단가:{' '}
+        {(props.accumPrice / props.stockCount).toLocaleString('ko', {
+          maximumFractionDigits: 0,
+        })}
+        원
+      </Text>
     </>
   );
 }
@@ -242,7 +243,9 @@ function BuySellHistory(): JSX.Element {
   return (
     <>
       <Summary historyList={historyList} />
-      <Text>매수, 매도 히스토리가 여기 나옵니다~ 최신 거래가 맨 위에!</Text>
+
+      <Text style={styles.sectionTitle}>기록</Text>
+
       <NewBuySellEntry addFunc={addFunc} />
       {historyList
         .slice(0)
@@ -319,6 +322,18 @@ const styles = StyleSheet.create({
   },
   highlight: {
     fontWeight: '700',
+  },
+  container: {
+    flex: 1,
+    padding: 5,
+  },
+  rowContainer: {
+    flex: 1,
+    padding: 5,
+    flexDirection: 'row',
+  },
+  flexOne: {
+    flex: 1,
   },
 });
 

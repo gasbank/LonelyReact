@@ -1,7 +1,7 @@
 import {BuySellEntryProps} from './BuySellEntryProps';
 import {SummaryEntry, SummaryEntryProps} from './SummaryEntryProps';
 import {BuySellType} from './BuySellType';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {NewBuySellEntry} from './NewBuySellEntry';
 import {BuySellEntry} from './BuySellEntry';
 import {styles} from './App';
@@ -141,7 +141,29 @@ export function BuySellHistory(): JSX.Element {
     setSummaryDict(new Map());
   }
 
-  function addFuncInternal(entryProps: BuySellEntryProps) {
+  async function addFuncAndWriteToDb(entryProps: BuySellEntryProps) {
+    if (db.current) {
+      try {
+        const result = await query(
+          db.current,
+          'INSERT INTO BuySellHistory (BuySellType, TransactionDate, StockName, StockCount, StockPrice) VALUES (?, ?, ?, ?, ?)',
+          [
+            entryProps.buySellType?.toString() || 'error',
+            new Date().toString(),
+            entryProps.stockName,
+            entryProps.stockCount,
+            entryProps.stockPrice,
+          ],
+        );
+        entryProps.key = result.insertId;
+        console.log('-----');
+        console.log(JSON.stringify(result));
+      } catch (e) {
+        console.error(e);
+      }
+    } else {
+      console.error('db.current null');
+    }
     const r = addFunc(historyList, summaryDict, entryProps);
     if (r) {
       setHistoryList(r.newHistoryList);
@@ -149,29 +171,37 @@ export function BuySellHistory(): JSX.Element {
     }
   }
 
+  let db = useRef<SQLiteDatabase>();
+
   useEffect(() => {
     //SQLite.enablePromise(true);
-    const db = SQLite.openDatabase(
+    db.current = SQLite.openDatabase(
       {name: 'LonelyDb'},
       okCallback,
       errorCallback,
     );
 
     async function okCallback() {
+      if (!db.current) {
+        console.error('db.current null');
+        return;
+      }
       console.log('Sqlite ok');
 
+      /*
       const result1 = await query(
-        db,
+        db.current,
         'DROP TABLE IF EXISTS BuySellHistory;',
         [],
       );
       console.log(result1);
 
       const result2 = await query(
-        db,
+        db.current,
         `CREATE TABLE BuySellHistory
               (
                   Id              INTEGER PRIMARY KEY,
+                  BuySellType TEXT NOT NULL,
                   TransactionDate DateTime,
                   StockName       TEXT    NOT NULL,
                   StockCount      INTEGER NOT NULL,
@@ -181,14 +211,20 @@ export function BuySellHistory(): JSX.Element {
       );
       console.log(result2);
 
+
+
       const result3 = await query(
-        db,
-        "insert into BuySellHistory (TransactionDate, StockName, StockCount, StockPrice) VALUES ('2022-05-06', 'a', 1, 1000);",
+        db.current,
+        "INSERT INTO BuySellHistory (TransactionDate, StockName, StockCount, StockPrice) VALUES ('2022-05-06', 'a', 1, 1000);",
         [],
       );
       console.log(result3);
-
-      const result4 = await query(db, 'SELECT * FROM BuySellHistory;', []);
+      */
+      const result4 = await query(
+        db.current,
+        'SELECT * FROM BuySellHistory;',
+        [],
+      );
       console.log(result4);
 
       console.log('Sqlite result 2');
@@ -201,7 +237,7 @@ export function BuySellHistory(): JSX.Element {
         console.log(JSON.stringify(item));
 
         const r = addFunc(curHistoryList, curSummaryDict, {
-          buySellType: BuySellType.Buy,
+          buySellType: parseInt(item.BuySellType),
           key: item.Id,
           stockName: item.StockName,
           stockPrice: item.StockPrice,
@@ -229,7 +265,7 @@ export function BuySellHistory(): JSX.Element {
       <Summary summaryDict={summaryDict} />
       <Text style={styles.sectionTitle}>기록</Text>
 
-      <NewBuySellEntry key={12345} addFunc={addFuncInternal} />
+      <NewBuySellEntry key={12345} addFunc={addFuncAndWriteToDb} />
       {historyList
         .slice(0)
         .reverse()

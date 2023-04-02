@@ -136,12 +136,13 @@ export function BuySellHistory(): JSX.Element {
 
       <Text style={styles.sectionTitle}>기록</Text>
 
-      <NewBuySellEntry addFunc={addFuncInternal} />
+      <NewBuySellEntry key="" addFunc={addFuncInternal} />
       {historyList
         .slice(0)
         .reverse()
         .map(e => (
           <BuySellEntry
+            key="xxx"
             buySellType={e.buySellType}
             transactionDate={e.transactionDate}
             stockName={e.stockName}

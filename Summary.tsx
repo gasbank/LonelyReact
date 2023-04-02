@@ -6,6 +6,7 @@ export function Summary(props: SummaryProps): JSX.Element {
   const historyEntryList = Array.from(props.summaryDict.entries()).map(e => {
     return (
       <SummaryEntry
+        key="123"
         stockName={e[1].stockName}
         stockCount={e[1].stockCount}
         accumPrice={e[1].accumPrice}

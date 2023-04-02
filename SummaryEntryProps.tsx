@@ -1,4 +1,5 @@
 export interface SummaryEntryProps {
+  key: string;
   stockName: string;
   stockCount: number;
   accumPrice: number;

@@ -1,12 +1,12 @@
 import {BuySellEntryProps} from './BuySellEntryProps';
 import {SummaryEntryProps} from './SummaryEntryProps';
 import {BuySellType} from './BuySellType';
-import React, {useState} from 'react';
-import {Summary} from './Summary';
+import React, {useEffect, useState} from 'react';
 import {NewBuySellEntry} from './NewBuySellEntry';
 import {BuySellEntry} from './BuySellEntry';
 import {styles} from './App';
-import {Text, Button} from 'react-native';
+import {Button, Text} from 'react-native';
+import SQLite, {SQLiteDatabase} from 'react-native-sqlite-storage';
 
 function addFunc(
   history: BuySellEntryProps[],
@@ -60,16 +60,9 @@ function refreshSummary(newHistoryList: BuySellEntryProps[]) {
       return;
     }
 
-    let summaryEntry: SummaryEntryProps = newSummaryDict.get(e.stockName) || {
-      stockName: e.stockName,
-      stockCount: 0,
-      accumPrice: 0,
-      accumBuyPrice: 0,
-      accumSellPrice: 0,
-      accumBuyCount: 0,
-      accumSellCount: 0,
-      accumEarn: 0,
-    };
+    let summaryEntry: SummaryEntryProps =
+      newSummaryDict.get(e.stockName) ||
+      ({stockName: e.stockName} as SummaryEntryProps);
 
     if (e.buySellType === BuySellType.Buy) {
       summaryEntry.accumPrice += e.stockCount * e.stockPrice;
@@ -130,10 +123,98 @@ export function BuySellHistory(): JSX.Element {
     }
   }
 
+  useEffect(() => {
+    SQLite.enablePromise(true);
+
+    function okCallback(db: SQLiteDatabase) {
+      console.log('Sqlite ok');
+
+      db.transaction(tx => {
+        return tx.executeSql(
+          `
+              DROP TABLE IF EXISTS BuySellHistory;
+              CREATE TABLE BuySellHistory
+              (
+                  Id              INTEGER PRIMARY KEY,
+                  TransactionDate DateTime,
+                  StockName       TEXT    NOT NULL,
+                  StockCount      INTEGER NOT NULL,
+                  StockPrice      INTEGER NOT NULL
+              );
+              insert into BuySellHistory (TransactionDate, StockName, StockCount, StockPrice)
+              VALUES ('2022-05-06', 'a', 1, 1000);
+              insert into BuySellHistory (TransactionDate, StockName, StockCount, StockPrice)
+              VALUES ('2022-05-06', 'a', 1, 1100);
+              insert into BuySellHistory (TransactionDate, StockName, StockCount, StockPrice)
+              VALUES ('2022-05-06', 'a', 1, 1200);
+          `,
+          [],
+        );
+      }).then(value => {
+          console.log('Sqlite result 1');
+          console.log(JSON.stringify(value[1]));
+        },
+        failReason => {
+          console.log('Sqlite failed 1');
+          console.log(JSON.stringify(failReason));
+        },
+      );
+      }).then(
+        tx => {
+          console.log('SQL stage 2');
+
+          return tx.executeSql('SELECT * FROM BuySellHistory;', []);
+      }).then(
+        value => {
+              console.log('Sqlite result 2');
+              console.log(JSON.stringify(value[1]));
+              let curHistoryList = historyList;
+              let curSummaryDict = summaryDict;
+              for (let i = 0; i < value[1].rows.length; i++) {
+                const item = value[1].rows.item(i);
+
+                console.log(JSON.stringify(item));
+
+                const r = addFunc(curHistoryList, curSummaryDict, {
+                  buySellType: BuySellType.Buy,
+                  key: item.Id,
+                  stockName: item.StockName,
+                  stockPrice: item.StockPrice,
+                  stockCount: item.StockCount,
+                  transactionDate: new Date(item.TransactionDate),
+                });
+                if (r) {
+                  curHistoryList = r.newHistoryList;
+                  curSummaryDict = r.newSummaryDict;
+                }
+              }
+
+              setHistoryList(curHistoryList);
+              setSummaryDict(curSummaryDict);
+            },
+            failReason => {
+              console.error('Sqlite error occurred. 2');
+              console.error(JSON.stringify(failReason));
+            },
+          );
+        },
+        failReason => {
+          console.error('Sqlite error occurred. 3');
+          console.error(JSON.stringify(failReason));
+        },
+      );
+    }
+
+    function errorCallback() {
+      console.log('Sqlite error');
+    }
+
+    SQLite.openDatabase({name: 'LonelyDb'}).then(okCallback, errorCallback);
+  }, []);
+
+  //<Summary summaryDict={summaryDict} />
   return (
     <>
-      <Summary summaryDict={summaryDict} />
-
       <Text style={styles.sectionTitle}>기록</Text>
 
       <NewBuySellEntry key="" addFunc={addFuncInternal} />
@@ -142,7 +223,7 @@ export function BuySellHistory(): JSX.Element {
         .reverse()
         .map(e => (
           <BuySellEntry
-            key="xxx"
+            key={e.key}
             buySellType={e.buySellType}
             transactionDate={e.transactionDate}
             stockName={e.stockName}

@@ -1,6 +1,6 @@
-import { SummaryProps } from "./SummaryProps";
-import { SummaryEntry } from "./SummaryEntry";
-import React from "react";
+import {SummaryProps} from './SummaryProps';
+import {SummaryEntry} from './SummaryEntry';
+import React from 'react';
 
 export function Summary(props: SummaryProps): JSX.Element {
   const historyEntryList = Array.from(props.summaryDict.entries()).map(e => {

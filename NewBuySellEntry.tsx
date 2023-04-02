@@ -15,6 +15,7 @@ export function NewBuySellEntry(props: NewBuySellEntryProps): JSX.Element {
     }
 
     props.addFunc({
+      key: '',
       buySellType: transactionType,
       transactionDate: new Date(),
       stockName: stockName,

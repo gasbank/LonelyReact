@@ -1772,6 +1772,11 @@
   resolved "https://registry.yarnpkg.com/@types/prop-types/-/prop-types-15.7.5.tgz#5f19d2b85a98e9558036f6a3cacc8819420f05cf"
   integrity sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w==
 
+"@types/react-native-sqlite-storage@^6.0.0":
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/@types/react-native-sqlite-storage/-/react-native-sqlite-storage-6.0.0.tgz#3d183123f1200744f84b699704a3221ded4cb04b"
+  integrity sha512-bzZLc+DsfSQUcUtZUa5M1Ubi/ud88Pdd3k1nbUCQ1baHHzLg95S0DidCWscDHnnuGFB+18GBbcY7r97ivb0XpA==
+
 "@types/react-test-renderer@^18.0.0":
   version "18.0.0"
   resolved "https://registry.yarnpkg.com/@types/react-test-renderer/-/react-test-renderer-18.0.0.tgz#7b7f69ca98821ea5501b21ba24ea7b6139da2243"
@@ -5728,6 +5733,11 @@ react-native-gradle-plugin@^0.71.17:
   version "0.71.17"
   resolved "https://registry.yarnpkg.com/react-native-gradle-plugin/-/react-native-gradle-plugin-0.71.17.tgz#cf780a27270f0a32dca8184eff91555d7627dd00"
   integrity sha512-OXXYgpISEqERwjSlaCiaQY6cTY5CH6j73gdkWpK0hedxtiWMWgH+i5TOi4hIGYitm9kQBeyDu+wim9fA8ROFJA==
+
+react-native-sqlite-storage@^6.0.1:
+  version "6.0.1"
+  resolved "https://registry.yarnpkg.com/react-native-sqlite-storage/-/react-native-sqlite-storage-6.0.1.tgz#ce6a6b852f07abbea68658d5363818c8bef45dfb"
+  integrity sha512-1tDFjrint6X6qSYKf3gDyz+XB+X79jfiL6xTugKHPRtF0WvqMtVgdLuNqZunIXjNEvNtNVEbXaeZ6MsguFu00A==
 
 react-native@0.71.5:
   version "0.71.5"

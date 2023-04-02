@@ -1,7 +1,7 @@
 import {BuySellType} from './BuySellType';
 
 export interface BuySellEntryProps {
-  key: string;
+  key: number;
   buySellType?: BuySellType; // 산 건지 판 건지
   transactionDate?: Date; // 언제
   stockName?: string; // 어떤 종목을

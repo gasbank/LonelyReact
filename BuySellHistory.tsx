@@ -1,11 +1,18 @@
 import {BuySellEntryProps} from './BuySellEntryProps';
-import {SummaryEntry, SummaryEntryProps} from './SummaryEntryProps';
+import {SummaryData, SummaryEntryProps} from './SummaryEntryProps';
 import {BuySellType} from './BuySellType';
 import React, {useEffect, useRef, useState} from 'react';
 import {NewBuySellEntry} from './NewBuySellEntry';
 import {BuySellEntry} from './BuySellEntry';
 import {styles} from './App';
-import {Button, Modal, Pressable, Text, View} from 'react-native';
+import {
+  Button,
+  Modal,
+  NativeEventEmitter,
+  Pressable,
+  Text,
+  View,
+} from 'react-native';
 import SQLite, {
   ResultSet,
   SQLError,
@@ -66,7 +73,7 @@ function refreshSummary(newHistoryList: BuySellEntryProps[]) {
     }
 
     let summaryEntry: SummaryEntryProps =
-      newSummaryDict.get(e.stockName) || new SummaryEntry(e.stockName);
+      newSummaryDict.get(e.stockName) || new SummaryData(e.stockName);
 
     if (e.buySellType === BuySellType.Buy) {
       summaryEntry.accumPrice += e.stockCount * e.stockPrice;
@@ -118,6 +125,7 @@ export function BuySellHistory(): JSX.Element {
     Map<string, SummaryEntryProps>
   >(new Map());
   const [clearAllModalVisible, setClearAllModalVisible] = useState(false);
+  const db = useRef<SQLiteDatabase>();
 
   async function refreshEarn() {
     const oldHistoryList = historyList;
@@ -177,8 +185,6 @@ export function BuySellHistory(): JSX.Element {
     }
   }
 
-  let db = useRef<SQLiteDatabase>();
-
   async function recreateTable() {
     if (!db.current) {
       console.error('db current null');
@@ -195,14 +201,14 @@ export function BuySellHistory(): JSX.Element {
     const result2 = await query(
       db.current,
       `CREATE TABLE BuySellHistory
-              (
-                  Id              INTEGER PRIMARY KEY,
-                  BuySellType TEXT NOT NULL,
-                  TransactionDate DateTime,
-                  StockName       TEXT    NOT NULL,
-                  StockCount      INTEGER NOT NULL,
-                  StockPrice      INTEGER NOT NULL
-              );`,
+       (
+           Id              INTEGER PRIMARY KEY,
+           BuySellType     TEXT    NOT NULL,
+           TransactionDate DateTime,
+           StockName       TEXT    NOT NULL,
+           StockCount      INTEGER NOT NULL,
+           StockPrice      INTEGER NOT NULL
+       );`,
       [],
     );
     console.log(result2);
@@ -223,31 +229,19 @@ export function BuySellHistory(): JSX.Element {
       }
       console.log('Sqlite ok');
 
-      /*
-
-
-
-
-      const result3 = await query(
-        db.current,
-        "INSERT INTO BuySellHistory (TransactionDate, StockName, StockCount, StockPrice) VALUES ('2022-05-06', 'a', 1, 1000);",
-        [],
-      );
-      console.log(result3);
-      */
-      const result4 = await query(
+      const selectResult = await query(
         db.current,
         'SELECT * FROM BuySellHistory;',
         [],
       );
-      console.log(result4);
+      console.log(selectResult);
 
       console.log('Sqlite result 2');
-      console.log(JSON.stringify(result4));
+      console.log(JSON.stringify(selectResult));
       let curHistoryList: BuySellEntryProps[] = [];
       let curSummaryDict: Map<string, SummaryEntryProps> = new Map();
-      for (let i = 0; i < result4.rows.length; i++) {
-        const item = result4.rows.item(i);
+      for (let i = 0; i < selectResult.rows.length; i++) {
+        const item = selectResult.rows.item(i);
 
         console.log(JSON.stringify(item));
 
@@ -273,14 +267,29 @@ export function BuySellHistory(): JSX.Element {
       console.error('Sqlite error');
       console.error(e);
     }
+
+    if (newBuySellEntryRef.current) {
+      //newBuySellEntryRef.current.;
+    }
   }, []);
 
+  function onSelectStockSummary(stockName: string) {
+    console.log(`Stock summary selected: '${stockName}'`);
+    const eventEmitter = new NativeEventEmitter();
+    eventEmitter.emit('onStockNameSelected', stockName);
+  }
+
+  const newBuySellEntryRef = useRef<JSX.Element>();
   return (
     <>
-      <Summary summaryDict={summaryDict} />
+      <Summary summaryDict={summaryDict} onSelect={onSelectStockSummary} />
       <Text style={styles.sectionTitle}>기록</Text>
 
-      <NewBuySellEntry key={12345} addFunc={addFuncAndWriteToDb} />
+      <NewBuySellEntry
+        key={12345}
+        addFunc={addFuncAndWriteToDb}
+        ref={newBuySellEntryRef}
+      />
       {historyList
         .slice(0)
         .reverse()

@@ -10,7 +10,11 @@ export interface SummaryEntryProps {
   accumEarn: number;
 }
 
-export class SummaryEntry implements SummaryEntryProps {
+export interface SummaryEntryWithCallbackProps extends SummaryEntryProps {
+  onSelect: (stockName: string) => void;
+}
+
+export class SummaryData implements SummaryEntryProps {
   accumBuyCount: number = 0;
   accumBuyPrice: number = 0;
   accumEarn: number = 0;

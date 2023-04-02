@@ -1,13 +1,27 @@
 import {NewBuySellEntryProps} from './NewBuySellEntryProps';
-import React, {useState} from 'react';
+import React, {forwardRef, useEffect, useState} from 'react';
 import {BuySellType} from './BuySellType';
 import {styles} from './App';
-import {Button, TextInput, View} from 'react-native';
+import {Button, NativeEventEmitter, TextInput, View} from 'react-native';
 
-export function NewBuySellEntry(props: NewBuySellEntryProps): JSX.Element {
+export const NewBuySellEntry = forwardRef((props: NewBuySellEntryProps, _) => {
   const [stockName, setStockName] = useState(props.stockName);
   const [stockPrice, setStockPrice] = useState(props.stockPrice);
   const [stockCount, setStockCount] = useState(props.stockCount);
+
+  useEffect(() => {
+    const eventEmitter = new NativeEventEmitter();
+    const eventListener = eventEmitter.addListener(
+      'onStockNameSelected',
+      event => {
+        console.log('event received');
+        setStockName(event);
+      },
+    );
+    return () => {
+      eventListener.remove();
+    };
+  });
 
   function onPress(transactionType: BuySellType) {
     if (!stockName || !stockPrice || !stockCount) {
@@ -15,7 +29,7 @@ export function NewBuySellEntry(props: NewBuySellEntryProps): JSX.Element {
     }
 
     props.addFunc({
-      key: '',
+      key: -1,
       buySellType: transactionType,
       transactionDate: new Date(),
       stockName: stockName,
@@ -33,7 +47,7 @@ export function NewBuySellEntry(props: NewBuySellEntryProps): JSX.Element {
         <TextInput
           placeholder="종목명"
           value={stockName}
-          onChangeText={v => setStockName(v)}
+          onChangeText={setStockName}
           style={styles.flexOne}
         />
         <TextInput
@@ -70,4 +84,4 @@ export function NewBuySellEntry(props: NewBuySellEntryProps): JSX.Element {
       </View>
     </>
   );
-}
+});

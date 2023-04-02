@@ -5,7 +5,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import {NewBuySellEntry} from './NewBuySellEntry';
 import {BuySellEntry} from './BuySellEntry';
 import {styles} from './App';
-import {Button, Text} from 'react-native';
+import {Button, Modal, Pressable, Text, View} from 'react-native';
 import SQLite, {
   ResultSet,
   SQLError,
@@ -117,10 +117,11 @@ export function BuySellHistory(): JSX.Element {
   const [summaryDict, setSummaryDict] = useState<
     Map<string, SummaryEntryProps>
   >(new Map());
+  const [clearAllModalVisible, setClearAllModalVisible] = useState(false);
 
-  function refreshEarn() {
+  async function refreshEarn() {
     const oldHistoryList = historyList;
-    clearAll();
+    clearStateOnly();
 
     let newHistoryList: BuySellEntryProps[] = [];
     let newSummaryDict = new Map<string, SummaryEntryProps>();
@@ -136,7 +137,12 @@ export function BuySellHistory(): JSX.Element {
     setSummaryDict(newSummaryDict);
   }
 
-  function clearAll() {
+  async function clearAll() {
+    await recreateTable();
+    clearStateOnly();
+  }
+
+  function clearStateOnly() {
     setHistoryList([]);
     setSummaryDict(new Map());
   }
@@ -173,6 +179,35 @@ export function BuySellHistory(): JSX.Element {
 
   let db = useRef<SQLiteDatabase>();
 
+  async function recreateTable() {
+    if (!db.current) {
+      console.error('db current null');
+      return;
+    }
+
+    const result1 = await query(
+      db.current,
+      'DROP TABLE IF EXISTS BuySellHistory;',
+      [],
+    );
+    console.log(result1);
+
+    const result2 = await query(
+      db.current,
+      `CREATE TABLE BuySellHistory
+              (
+                  Id              INTEGER PRIMARY KEY,
+                  BuySellType TEXT NOT NULL,
+                  TransactionDate DateTime,
+                  StockName       TEXT    NOT NULL,
+                  StockCount      INTEGER NOT NULL,
+                  StockPrice      INTEGER NOT NULL
+              );`,
+      [],
+    );
+    console.log(result2);
+  }
+
   useEffect(() => {
     //SQLite.enablePromise(true);
     db.current = SQLite.openDatabase(
@@ -189,27 +224,7 @@ export function BuySellHistory(): JSX.Element {
       console.log('Sqlite ok');
 
       /*
-      const result1 = await query(
-        db.current,
-        'DROP TABLE IF EXISTS BuySellHistory;',
-        [],
-      );
-      console.log(result1);
 
-      const result2 = await query(
-        db.current,
-        `CREATE TABLE BuySellHistory
-              (
-                  Id              INTEGER PRIMARY KEY,
-                  BuySellType TEXT NOT NULL,
-                  TransactionDate DateTime,
-                  StockName       TEXT    NOT NULL,
-                  StockCount      INTEGER NOT NULL,
-                  StockPrice      INTEGER NOT NULL
-              );`,
-        [],
-      );
-      console.log(result2);
 
 
 
@@ -237,7 +252,7 @@ export function BuySellHistory(): JSX.Element {
         console.log(JSON.stringify(item));
 
         const r = addFunc(curHistoryList, curSummaryDict, {
-          buySellType: parseInt(item.BuySellType),
+          buySellType: parseInt(item.BuySellType, 10),
           key: item.Id,
           stockName: item.StockName,
           stockPrice: item.StockPrice,
@@ -281,7 +296,33 @@ export function BuySellHistory(): JSX.Element {
           />
         ))}
       <Button title="수익 일괄 재계산" onPress={refreshEarn} />
-      <Button title="모든 기록 삭제" onPress={clearAll} />
+      <Button
+        title="모든 기록 삭제"
+        onPress={() => setClearAllModalVisible(true)}
+      />
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={clearAllModalVisible}>
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text>정말 모든 기록을 삭제할까요?!?!</Text>
+            <Pressable
+              style={[styles.button, styles.buttonOpen]}
+              onPress={async () => {
+                await clearAll();
+                setClearAllModalVisible(false);
+              }}>
+              <Text>삭제!!!</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.button, styles.buttonClose]}
+              onPress={() => setClearAllModalVisible(false)}>
+              <Text>취소 취소 취소</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 }

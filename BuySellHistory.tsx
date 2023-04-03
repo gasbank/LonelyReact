@@ -20,10 +20,11 @@ import SQLite, {
 } from 'react-native-sqlite-storage';
 import {Summary} from './Summary';
 
-function addFunc(
+async function addFunc(
   history: BuySellEntryProps[],
   summaryDict: Map<string, SummaryEntryProps>,
   entryProps: BuySellEntryProps,
+  db?: SQLiteDatabase,
 ) {
   if (
     !entryProps.stockName ||
@@ -46,6 +47,28 @@ function addFunc(
   ) {
     console.error('가진 것보다 더 팔 수 없음');
     return;
+  }
+
+  // 조건 체크는 끝났다~ DB에 써야한다면 쓰자~
+  if (db) {
+    try {
+      const result = await query(
+        db,
+        'INSERT INTO BuySellHistory (BuySellType, TransactionDate, StockName, StockCount, StockPrice) VALUES (?, ?, ?, ?, ?)',
+        [
+          entryProps.buySellType?.toString() || 'error',
+          new Date().toString(),
+          entryProps.stockName,
+          entryProps.stockCount,
+          entryProps.stockPrice,
+        ],
+      );
+      entryProps.key = result.insertId;
+      console.log('-----');
+      console.log(JSON.stringify(result));
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   if (entryProps.buySellType === BuySellType.Sell) {
@@ -126,24 +149,25 @@ export function BuySellHistory(): JSX.Element {
   >(new Map());
   const [clearAllModalVisible, setClearAllModalVisible] = useState(false);
   const db = useRef<SQLiteDatabase>();
+  const [dbLoadedCount, setDbLoadedCount] = useState(0);
 
-  async function refreshEarn() {
-    const oldHistoryList = historyList;
-    clearStateOnly();
-
-    let newHistoryList: BuySellEntryProps[] = [];
-    let newSummaryDict = new Map<string, SummaryEntryProps>();
-
-    for (let v of oldHistoryList) {
-      const r = addFunc(newHistoryList, newSummaryDict, v);
-      if (r) {
-        newHistoryList = r.newHistoryList;
-        newSummaryDict = r.newSummaryDict;
-      }
-    }
-    setHistoryList(newHistoryList);
-    setSummaryDict(newSummaryDict);
-  }
+  // async function refreshEarn() {
+  //   const oldHistoryList = historyList;
+  //   clearStateOnly();
+  //
+  //   let newHistoryList: BuySellEntryProps[] = [];
+  //   let newSummaryDict = new Map<string, SummaryEntryProps>();
+  //
+  //   for (let v of oldHistoryList) {
+  //     const r = addFunc(newHistoryList, newSummaryDict, v);
+  //     if (r) {
+  //       newHistoryList = r.newHistoryList;
+  //       newSummaryDict = r.newSummaryDict;
+  //     }
+  //   }
+  //   setHistoryList(newHistoryList);
+  //   setSummaryDict(newSummaryDict);
+  // }
 
   async function clearAll() {
     await recreateTable();
@@ -156,33 +180,46 @@ export function BuySellHistory(): JSX.Element {
   }
 
   async function addFuncAndWriteToDb(entryProps: BuySellEntryProps) {
-    if (db.current) {
-      try {
-        const result = await query(
-          db.current,
-          'INSERT INTO BuySellHistory (BuySellType, TransactionDate, StockName, StockCount, StockPrice) VALUES (?, ?, ?, ?, ?)',
-          [
-            entryProps.buySellType?.toString() || 'error',
-            new Date().toString(),
-            entryProps.stockName,
-            entryProps.stockCount,
-            entryProps.stockPrice,
-          ],
-        );
-        entryProps.key = result.insertId;
-        console.log('-----');
-        console.log(JSON.stringify(result));
-      } catch (e) {
-        console.error(e);
-      }
-    } else {
-      console.error('db.current null');
-    }
-    const r = addFunc(historyList, summaryDict, entryProps);
+    const r = await addFunc(historyList, summaryDict, entryProps, db.current);
     if (r) {
       setHistoryList(r.newHistoryList);
       setSummaryDict(r.newSummaryDict);
     }
+  }
+
+  async function createTableIfNotExists() {
+    if (!db.current) {
+      return;
+    }
+
+    const result = await query(
+      db.current,
+      `SELECT name
+             FROM sqlite_master
+             WHERE type = 'table'
+               AND name = ?`,
+      ['BuySellHistory'],
+    );
+    if (result.rows.length >= 1) {
+      return;
+    }
+
+    // IF NOT EXISTS 구문 쓰니까 코드 포맷팅 깨지네 ㅋㅋㅋ
+    // 안쓴다 안써...
+    const result2 = await query(
+      db.current,
+      `CREATE TABLE BuySellHistory
+             (
+                 Id              INTEGER PRIMARY KEY,
+                 BuySellType     TEXT    NOT NULL,
+                 TransactionDate DateTime,
+                 StockName       TEXT    NOT NULL,
+                 StockCount      INTEGER NOT NULL,
+                 StockPrice      INTEGER NOT NULL
+             );`,
+      [],
+    );
+    console.log(result2);
   }
 
   async function recreateTable() {
@@ -198,20 +235,7 @@ export function BuySellHistory(): JSX.Element {
     );
     console.log(result1);
 
-    const result2 = await query(
-      db.current,
-      `CREATE TABLE BuySellHistory
-       (
-           Id              INTEGER PRIMARY KEY,
-           BuySellType     TEXT    NOT NULL,
-           TransactionDate DateTime,
-           StockName       TEXT    NOT NULL,
-           StockCount      INTEGER NOT NULL,
-           StockPrice      INTEGER NOT NULL
-       );`,
-      [],
-    );
-    console.log(result2);
+    await createTableIfNotExists();
   }
 
   useEffect(() => {
@@ -229,12 +253,16 @@ export function BuySellHistory(): JSX.Element {
       }
       console.log('Sqlite ok');
 
+      await createTableIfNotExists();
+
       const selectResult = await query(
         db.current,
         'SELECT * FROM BuySellHistory;',
         [],
       );
       console.log(selectResult);
+
+      setDbLoadedCount(selectResult.rows.length);
 
       console.log('Sqlite result 2');
       console.log(JSON.stringify(selectResult));
@@ -245,7 +273,7 @@ export function BuySellHistory(): JSX.Element {
 
         console.log(JSON.stringify(item));
 
-        const r = addFunc(curHistoryList, curSummaryDict, {
+        const r = await addFunc(curHistoryList, curSummaryDict, {
           buySellType: parseInt(item.BuySellType, 10),
           key: item.Id,
           stockName: item.StockName,
@@ -280,38 +308,46 @@ export function BuySellHistory(): JSX.Element {
   }
 
   const newBuySellEntryRef = useRef<JSX.Element>();
+
   return (
     <>
-      <Summary summaryDict={summaryDict} onSelect={onSelectStockSummary} />
-      <Text style={styles.sectionTitle}>기록</Text>
+      <View>
+        <Summary summaryDict={summaryDict} onSelect={onSelectStockSummary} />
+      </View>
 
-      <NewBuySellEntry
-        key={12345}
-        addFunc={addFuncAndWriteToDb}
-        ref={newBuySellEntryRef}
-      />
-      {historyList
-        .slice(0)
-        .reverse()
-        .map(e => (
-          <BuySellEntry
-            key={e.key}
-            buySellType={e.buySellType}
-            transactionDate={e.transactionDate}
-            stockName={e.stockName}
-            stockPrice={e.stockPrice}
-            stockCount={e.stockCount}
-            earn={e.earn}
-          />
-        ))}
-      {/*<Button title="수익 일괄 재계산" onPress={refreshEarn} />*/}
-      <Button
-        title="모든 기록 삭제"
-        onPress={() => {
-          setClearAllModalVisible(true);
-          console.log('clicked');
-        }}
-      />
+      <View>
+        <Text style={styles.sectionTitle}>기록</Text>
+
+        <NewBuySellEntry
+          key={12345}
+          addFunc={addFuncAndWriteToDb}
+          ref={newBuySellEntryRef}
+        />
+        {historyList
+          .slice(0)
+          .reverse()
+          .map(e => (
+            <BuySellEntry
+              key={e.key}
+              buySellType={e.buySellType}
+              transactionDate={e.transactionDate}
+              stockName={e.stockName}
+              stockPrice={e.stockPrice}
+              stockCount={e.stockCount}
+              earn={e.earn}
+            />
+          ))}
+        {/*<Button title="수익 일괄 재계산" onPress={refreshEarn} />*/}
+        <Button
+          title="모든 기록 삭제"
+          onPress={() => {
+            setClearAllModalVisible(true);
+            console.log('clicked');
+          }}
+        />
+        <Text>DB Loaded Count: {dbLoadedCount}</Text>
+      </View>
+
       <Modal
         animationType="none"
         transparent={true}

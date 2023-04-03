@@ -1,7 +1,6 @@
-import React, {useEffect} from 'react';
+import React from 'react';
 import {
   SafeAreaView,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
@@ -24,12 +23,12 @@ function App(): JSX.Element {
         barStyle={isDarkMode ? 'light-content' : 'dark-content'}
         backgroundColor={backgroundStyle.backgroundColor}
       />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Text style={styles.sectionTitle}>잔고</Text>
-        <BuySellHistory />
-      </ScrollView>
+      <Text style={styles.sectionTitle}>잔고</Text>
+      <BuySellHistory />
+      {/*<ScrollView*/}
+      {/*  contentInsetAdjustmentBehavior="automatic"*/}
+      {/*  style={backgroundStyle}>*/}
+      {/*</ScrollView>*/}
     </SafeAreaView>
   );
 }
@@ -51,12 +50,19 @@ export const styles = StyleSheet.create({
   highlight: {
     fontWeight: '700',
   },
+  rootContainer: {},
+  summaryContainer: {
+    flex: 1,
+  },
+  historyContainer: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     padding: 5,
   },
   rowContainer: {
-    flex: 1,
+    flex: 2,
     padding: 5,
     flexDirection: 'row',
   },

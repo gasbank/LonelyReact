@@ -304,13 +304,16 @@ export function BuySellHistory(): JSX.Element {
             earn={e.earn}
           />
         ))}
-      <Button title="수익 일괄 재계산" onPress={refreshEarn} />
+      {/*<Button title="수익 일괄 재계산" onPress={refreshEarn} />*/}
       <Button
         title="모든 기록 삭제"
-        onPress={() => setClearAllModalVisible(true)}
+        onPress={() => {
+          setClearAllModalVisible(true);
+          console.log('clicked');
+        }}
       />
       <Modal
-        animationType="slide"
+        animationType="none"
         transparent={true}
         visible={clearAllModalVisible}>
         <View style={styles.centeredView}>

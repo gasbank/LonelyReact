@@ -1,8 +1,11 @@
 import {SummaryProps} from './SummaryProps';
 import {SummaryEntry} from './SummaryEntry';
 import React from 'react';
+import {View} from 'react-native';
+import {styles} from './App';
 
 export function Summary(props: SummaryProps): JSX.Element {
+  console.log(`props.summaryDict.size = ${props.summaryDict.size}`);
   const historyEntryList = Array.from(props.summaryDict.entries()).map(e => {
     return (
       <SummaryEntry
@@ -20,5 +23,9 @@ export function Summary(props: SummaryProps): JSX.Element {
     );
   });
 
-  return <>{historyEntryList}</>;
+  return (
+    <>
+      <View style={styles.flexOne}>{historyEntryList}</View>
+    </>
+  );
 }

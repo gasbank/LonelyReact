@@ -2,8 +2,6 @@ import {BuySellEntryProps} from './BuySellEntryProps';
 import {SummaryData, SummaryEntryProps} from './SummaryEntryProps';
 import {BuySellType} from './BuySellType';
 import React, {useEffect, useRef, useState} from 'react';
-import {NewBuySellEntry} from './NewBuySellEntry';
-import {BuySellEntry} from './BuySellEntry';
 import {styles} from './App';
 import {
   Button,
@@ -19,6 +17,8 @@ import SQLite, {
   SQLiteDatabase,
 } from 'react-native-sqlite-storage';
 import {Summary} from './Summary';
+import {BuySellEntry} from './BuySellEntry';
+import {NewBuySellEntry} from './NewBuySellEntry';
 
 async function addFunc(
   history: BuySellEntryProps[],
@@ -195,9 +195,9 @@ export function BuySellHistory(): JSX.Element {
     const result = await query(
       db.current,
       `SELECT name
-             FROM sqlite_master
-             WHERE type = 'table'
-               AND name = ?`,
+       FROM sqlite_master
+       WHERE type = 'table'
+         AND name = ?`,
       ['BuySellHistory'],
     );
     if (result.rows.length >= 1) {
@@ -209,14 +209,14 @@ export function BuySellHistory(): JSX.Element {
     const result2 = await query(
       db.current,
       `CREATE TABLE BuySellHistory
-             (
-                 Id              INTEGER PRIMARY KEY,
-                 BuySellType     TEXT    NOT NULL,
-                 TransactionDate DateTime,
-                 StockName       TEXT    NOT NULL,
-                 StockCount      INTEGER NOT NULL,
-                 StockPrice      INTEGER NOT NULL
-             );`,
+       (
+           Id              INTEGER PRIMARY KEY,
+           BuySellType     TEXT    NOT NULL,
+           TransactionDate DateTime,
+           StockName       TEXT    NOT NULL,
+           StockCount      INTEGER NOT NULL,
+           StockPrice      INTEGER NOT NULL
+       );`,
       [],
     );
     console.log(result2);
@@ -311,42 +311,39 @@ export function BuySellHistory(): JSX.Element {
 
   return (
     <>
-      <View>
-        <Summary summaryDict={summaryDict} onSelect={onSelectStockSummary} />
-      </View>
+      <Text style={styles.sectionTitle}>잔고</Text>
+      <Summary summaryDict={summaryDict} onSelect={onSelectStockSummary} />
 
-      <View>
-        <Text style={styles.sectionTitle}>기록</Text>
+      <Text style={styles.sectionTitle}>기록</Text>
 
-        <NewBuySellEntry
-          key={12345}
-          addFunc={addFuncAndWriteToDb}
-          ref={newBuySellEntryRef}
-        />
-        {historyList
-          .slice(0)
-          .reverse()
-          .map(e => (
-            <BuySellEntry
-              key={e.key}
-              buySellType={e.buySellType}
-              transactionDate={e.transactionDate}
-              stockName={e.stockName}
-              stockPrice={e.stockPrice}
-              stockCount={e.stockCount}
-              earn={e.earn}
-            />
-          ))}
-        {/*<Button title="수익 일괄 재계산" onPress={refreshEarn} />*/}
-        <Button
-          title="모든 기록 삭제"
-          onPress={() => {
-            setClearAllModalVisible(true);
-            console.log('clicked');
-          }}
-        />
-        <Text>DB Loaded Count: {dbLoadedCount}</Text>
-      </View>
+      <NewBuySellEntry
+        key={12345}
+        addFunc={addFuncAndWriteToDb}
+        ref={newBuySellEntryRef}
+      />
+      {historyList
+        .slice(0)
+        .reverse()
+        .map(e => (
+          <BuySellEntry
+            key={e.key}
+            buySellType={e.buySellType}
+            transactionDate={e.transactionDate}
+            stockName={e.stockName}
+            stockPrice={e.stockPrice}
+            stockCount={e.stockCount}
+            earn={e.earn}
+          />
+        ))}
+      {/*<Button title="수익 일괄 재계산" onPress={refreshEarn} />*/}
+      <Button
+        title="모든 기록 삭제"
+        onPress={() => {
+          setClearAllModalVisible(true);
+          console.log('clicked');
+        }}
+      />
+      <Text>DB Loaded Count: {dbLoadedCount}</Text>
 
       <Modal
         animationType="none"
@@ -366,7 +363,7 @@ export function BuySellHistory(): JSX.Element {
             <Pressable
               style={[styles.button, styles.buttonClose]}
               onPress={() => setClearAllModalVisible(false)}>
-              <Text>취소 취소 취소</Text>
+              <Text>취소 취소 취소~~~</Text>
             </Pressable>
           </View>
         </View>

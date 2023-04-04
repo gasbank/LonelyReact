@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {StrictMode} from 'react';
 import {
   SafeAreaView,
   StatusBar,
@@ -18,18 +18,20 @@ function App(): JSX.Element {
   };
 
   return (
-    <SafeAreaView style={[styles.container, backgroundStyle]}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <Text>고독한 투자자</Text>
-      <BuySellHistory />
-      {/*<ScrollView*/}
-      {/*  contentInsetAdjustmentBehavior="automatic"*/}
-      {/*  style={backgroundStyle}>*/}
-      {/*</ScrollView>*/}
-    </SafeAreaView>
+    <StrictMode>
+      <SafeAreaView style={[styles.container, backgroundStyle]}>
+        <StatusBar
+          barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+          backgroundColor={backgroundStyle.backgroundColor}
+        />
+        <Text>고독한 투자자</Text>
+        <BuySellHistory />
+        {/*<ScrollView*/}
+        {/*  contentInsetAdjustmentBehavior="automatic"*/}
+        {/*  style={backgroundStyle}>*/}
+        {/*</ScrollView>*/}
+      </SafeAreaView>
+    </StrictMode>
   );
 }
 
@@ -60,14 +62,18 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 10,
+    flexShrink: 1,
+    alignContent: 'flex-start',
   },
   rowContainer: {
-    flex: 1,
+    // flex: 1,
     padding: 5,
     flexDirection: 'row',
+    flexShrink: 1,
+    alignContent: 'flex-start',
   },
   colContainer: {
-    flex: 1,
+    // flex: 1,
     padding: 0,
     flexDirection: 'column',
   },

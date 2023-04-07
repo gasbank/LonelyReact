@@ -19,9 +19,7 @@ export function SummaryEntry(
   });
 
   return (
-    <Pressable
-      onPress={() => props.onSelect(props.stockName)}
-      style={styles.flexOne}>
+    <Pressable onPress={() => props.onSelect(props.stockName)}>
       <View style={styles.colContainer}>
         <View style={styles.rowContainer}>
           <Text style={styles.flexHalf}>{props.stockName}</Text>

@@ -2,7 +2,6 @@ import {SummaryProps} from './SummaryProps';
 import {SummaryEntry} from './SummaryEntry';
 import React from 'react';
 import {View} from 'react-native';
-import {styles} from './App';
 
 export function Summary(props: SummaryProps): JSX.Element {
   console.log(`props.summaryDict.size = ${props.summaryDict.size}`);
@@ -25,7 +24,7 @@ export function Summary(props: SummaryProps): JSX.Element {
 
   return (
     <>
-      <View style={styles.flexOne}>{historyEntryList}</View>
+      <View>{historyEntryList}</View>
     </>
   );
 }

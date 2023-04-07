@@ -1,6 +1,7 @@
 import React, {StrictMode} from 'react';
 import {
   SafeAreaView,
+  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
@@ -24,12 +25,11 @@ function App(): JSX.Element {
           barStyle={isDarkMode ? 'light-content' : 'dark-content'}
           backgroundColor={backgroundStyle.backgroundColor}
         />
-        <Text>고독한 투자자</Text>
-        <BuySellHistory />
-        {/*<ScrollView*/}
-        {/*  contentInsetAdjustmentBehavior="automatic"*/}
-        {/*  style={backgroundStyle}>*/}
-        {/*</ScrollView>*/}
+        <ScrollView
+          contentInsetAdjustmentBehavior="automatic"
+          style={backgroundStyle}>
+          <BuySellHistory />
+        </ScrollView>
       </SafeAreaView>
     </StrictMode>
   );
@@ -60,10 +60,11 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   container: {
-    flex: 1,
+    //flex: 1,
+    //flexGrow: 1,
     padding: 10,
-    flexShrink: 1,
-    alignContent: 'flex-start',
+    //flexShrink: 1,
+    //alignContent: 'flex-start',
   },
   rowContainer: {
     // flex: 1,

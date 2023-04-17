@@ -28,7 +28,9 @@ export function SummaryEntry(
           <Text style={styles.flexOne}>확정: +12.34%</Text>
         </View>
         <View style={styles.rowContainer}>
-          <Text style={styles.flexHalf}>{props.stockCount}주</Text>
+          <Text style={styles.flexHalf}>
+            {props.stockCount.toLocaleString('ko')}주
+          </Text>
           <Text style={styles.flexOne}>현재가: 00,000원</Text>
           <Text style={styles.flexOne}>+123,456원</Text>
           <Text style={styles.flexOne}>확정: {fixedIncomeStr}원</Text>

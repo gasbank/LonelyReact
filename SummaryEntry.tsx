@@ -72,7 +72,7 @@ export function SummaryEntry(
       console.log('AppState', appState.current);
     });
 
-    //executeAsyncFetch(props.stockName).then(() => {});
+    executeAsyncFetch(props.stockName).then(() => {});
 
     const interval = setInterval(() => {
       executeAsyncFetch(props.stockName).then(() => {});

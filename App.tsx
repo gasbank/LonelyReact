@@ -19,19 +19,17 @@ function App(): JSX.Element {
   };
 
   return (
-    <StrictMode>
-      <SafeAreaView style={[styles.container, backgroundStyle]}>
-        <StatusBar
-          barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-          backgroundColor={backgroundStyle.backgroundColor}
-        />
-        <ScrollView
-          contentInsetAdjustmentBehavior="automatic"
-          style={backgroundStyle}>
-          <BuySellHistory />
-        </ScrollView>
-      </SafeAreaView>
-    </StrictMode>
+    <SafeAreaView style={[styles.container, backgroundStyle]}>
+      <StatusBar
+        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+        backgroundColor={backgroundStyle.backgroundColor}
+      />
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        style={backgroundStyle}>
+        <BuySellHistory />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 

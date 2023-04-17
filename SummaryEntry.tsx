@@ -1,7 +1,7 @@
 import {SummaryEntryWithCallbackProps} from './SummaryEntryProps';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {styles} from './App';
-import {Pressable, Text, View} from 'react-native';
+import {AppState, Pressable, Text, View} from 'react-native';
 
 export function SummaryEntry(
   props: SummaryEntryWithCallbackProps,
@@ -12,6 +12,7 @@ export function SummaryEntry(
   const [currentRatio, setCurrentRatio] = useState<number | undefined>(
     undefined,
   );
+  const appState = useRef(AppState.currentState);
 
   const avgPrice =
     props.stockCount > 0 ? props.accumPrice / props.stockCount : 0;
@@ -31,8 +32,7 @@ export function SummaryEntry(
         const response = await fetch(
           `https://m.stock.naver.com/api/stock/${stockId}/basic`,
         );
-        const json = await response.json();
-        return json;
+        return await response.json();
       } catch (error) {
         console.error(error);
       }
@@ -58,7 +58,30 @@ export function SummaryEntry(
       }
     };
 
-    executeAsyncFetch(props.stockName).then(() => {});
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (
+        appState.current.match(/inactive|background/) &&
+        nextAppState === 'active'
+      ) {
+        console.log('App has come to the foreground!');
+        executeAsyncFetch(props.stockName).then(() => {});
+      }
+
+      appState.current = nextAppState;
+      //setAppStateVisible(appState.current);
+      console.log('AppState', appState.current);
+    });
+
+    //executeAsyncFetch(props.stockName).then(() => {});
+
+    const interval = setInterval(() => {
+      executeAsyncFetch(props.stockName).then(() => {});
+    }, 5000);
+
+    return () => {
+      subscription.remove();
+      clearInterval(interval);
+    };
   }, [props.stockName, avgPrice, props.stockCount]);
 
   const totalDiff = closePrice ? (closePrice - avgPrice) * props.stockCount : 0;

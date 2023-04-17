@@ -6,8 +6,12 @@ import {Pressable, Text, View} from 'react-native';
 export function SummaryEntry(
   props: SummaryEntryWithCallbackProps,
 ): JSX.Element {
-  const [closePrice, setClosePrice] = useState('');
   const [friendlyName, setFriendlyName] = useState('');
+  const [closePrice, setClosePrice] = useState<number | undefined>(undefined);
+  const [totalPrice, setTotalPrice] = useState<number | undefined>(undefined);
+  const [currentRatio, setCurrentRatio] = useState<number | undefined>(
+    undefined,
+  );
 
   const avgPrice =
     props.stockCount > 0 ? props.accumPrice / props.stockCount : 0;
@@ -36,34 +40,59 @@ export function SummaryEntry(
 
     const executeAsyncFetch = async (stockId: string) => {
       const data = await fetchDataKr(stockId);
-      const stockPrice = data.closePrice
-        ? parseInt(data.closePrice.replace(/,/g, ''), 10)
-        : undefined;
-      setClosePrice(stockPrice ? stockPrice.toLocaleString('ko') : '---');
-      setFriendlyName(data.stockName);
+      if (data) {
+        setFriendlyName(data.stockName);
+
+        const currentClosePrice = data.closePrice
+          ? parseInt(data.closePrice.replace(/,/g, ''), 10)
+          : undefined;
+        if (currentClosePrice) {
+          setClosePrice(currentClosePrice);
+          setTotalPrice(currentClosePrice * props.stockCount);
+          if (avgPrice !== 0) {
+            setCurrentRatio(currentClosePrice / avgPrice - 1);
+          }
+        } else {
+          setClosePrice(undefined);
+        }
+      }
     };
 
     executeAsyncFetch(props.stockName).then(() => {});
-  }, [props.stockName]);
+  }, [props.stockName, avgPrice, props.stockCount]);
+
+  const totalDiff = closePrice ? (closePrice - avgPrice) * props.stockCount : 0;
 
   return (
     <Pressable onPress={() => props.onSelect(props.stockName)}>
       <View style={styles.colContainer}>
         <View style={styles.rowContainer}>
-          <Text style={styles.flexHalf}>
-            {friendlyName} {props.stockName}
+          <Text style={[styles.flexOne, styles.stockName]}>
+            {friendlyName} {props.stockCount.toLocaleString('ko')}주
           </Text>
-          <Text style={styles.flexOne}>평단가: {avgPriceStr}원</Text>
-          <Text style={styles.flexOne}>+12.34%</Text>
-          <Text style={styles.flexOne}>확정: +12.34%</Text>
+        </View>
+        <View style={[styles.rowContainer, styles.gap20]}>
+          <Text style={[styles.totalPrice]}>
+            {(totalPrice || 0).toLocaleString('ko')}원
+          </Text>
+          <View style={styles.colContainer}>
+            <Text style={styles.flexOne}>
+              {(totalDiff || 0).toLocaleString('ko')}원
+            </Text>
+            <Text style={styles.flexOne}>
+              {(currentRatio || 0).toLocaleString('ko', {
+                style: 'percent',
+                minimumFractionDigits: 2,
+              })}
+            </Text>
+          </View>
         </View>
         <View style={styles.rowContainer}>
-          <Text style={styles.flexHalf}>
-            {props.stockCount.toLocaleString('ko')}주
+          <Text style={styles.flexOne}>
+            현재가: {closePrice ? closePrice.toLocaleString('ko') : '???'}원
           </Text>
-          <Text style={styles.flexOne}>현재가: {closePrice}원</Text>
-          <Text style={styles.flexOne}>+123,456원</Text>
-          <Text style={styles.flexOne}>확정: {fixedIncomeStr}원</Text>
+          <Text style={styles.flexOne}>평단가: {avgPriceStr}원</Text>
+          <Text style={styles.flexOne}>확정수익: {fixedIncomeStr}원</Text>
         </View>
       </View>
     </Pressable>

@@ -71,6 +71,9 @@ export const styles = StyleSheet.create({
     flexShrink: 1,
     alignContent: 'flex-start',
   },
+  gap20: {
+    gap: 20,
+  },
   colContainer: {
     // flex: 1,
     padding: 0,
@@ -114,6 +117,8 @@ export const styles = StyleSheet.create({
   buttonClose: {
     backgroundColor: '#2196F3',
   },
+  totalPrice: {fontSize: 30},
+  stockName: {fontWeight: '700', backgroundColor: '#F194FF'},
 });
 
 export default App;

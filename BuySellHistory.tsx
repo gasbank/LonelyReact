@@ -302,7 +302,7 @@ export function BuySellHistory(): JSX.Element {
   }, []);
 
   function onSelectStockSummary(stockName: string) {
-    console.log(`Stock summary selected: '${stockName}'`);
+    // console.log(`Stock summary selected: '${stockName}'`);
     const eventEmitter = new NativeEventEmitter();
     eventEmitter.emit('onStockNameSelected', stockName);
   }

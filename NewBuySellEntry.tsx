@@ -14,7 +14,7 @@ export const NewBuySellEntry = forwardRef((props: NewBuySellEntryProps, _) => {
     const eventListener = eventEmitter.addListener(
       'onStockNameSelected',
       event => {
-        console.log('event received');
+        // console.log('event received');
         setStockName(event);
       },
     );

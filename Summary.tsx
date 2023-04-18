@@ -4,7 +4,7 @@ import React from 'react';
 import {View} from 'react-native';
 
 export function Summary(props: SummaryProps): JSX.Element {
-  console.log(`props.summaryDict.size = ${props.summaryDict.size}`);
+  //console.log(`props.summaryDict.size = ${props.summaryDict.size}`);
   const historyEntryList = Array.from(props.summaryDict.entries())
     .filter(e => e[1].stockCount > 0)
     .map(e => {

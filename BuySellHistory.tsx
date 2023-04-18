@@ -82,7 +82,7 @@ async function addFunc(
   const newHistoryList = [...history, entryProps];
   const newSummaryDict = refreshSummary(newHistoryList);
 
-  console.log(newSummaryDict);
+  //console.log(newSummaryDict);
 
   return {newHistoryList, newSummaryDict};
 }
@@ -251,7 +251,7 @@ export function BuySellHistory(): JSX.Element {
         console.error('db.current null');
         return;
       }
-      console.log('Sqlite ok');
+      //console.log('Sqlite ok');
 
       await createTableIfNotExists();
 
@@ -260,18 +260,18 @@ export function BuySellHistory(): JSX.Element {
         'SELECT * FROM BuySellHistory;',
         [],
       );
-      console.log(selectResult);
+      //console.log(selectResult);
 
       setDbLoadedCount(selectResult.rows.length);
 
-      console.log('Sqlite result 2');
-      console.log(JSON.stringify(selectResult));
+      //console.log('Sqlite result 2');
+      //console.log(JSON.stringify(selectResult));
       let curHistoryList: BuySellEntryProps[] = [];
       let curSummaryDict: Map<string, SummaryEntryProps> = new Map();
       for (let i = 0; i < selectResult.rows.length; i++) {
         const item = selectResult.rows.item(i);
 
-        console.log(JSON.stringify(item));
+        //console.log(JSON.stringify(item));
 
         const r = await addFunc(curHistoryList, curSummaryDict, {
           buySellType: parseInt(item.BuySellType, 10),

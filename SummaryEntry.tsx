@@ -76,7 +76,7 @@ export function SummaryEntry(
 
     const interval = setInterval(() => {
       executeAsyncFetch(props.stockName).then(() => {});
-    }, 5000);
+    }, 2500);
 
     return () => {
       subscription.remove();

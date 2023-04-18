@@ -189,26 +189,14 @@ export function BuySellHistory(): JSX.Element {
 
   async function createTableIfNotExists() {
     if (!db.current) {
+      console.error('db not ready');
       return;
     }
 
-    const result = await query(
-      db.current,
-      `SELECT name
-       FROM sqlite_master
-       WHERE type = 'table'
-         AND name = ?`,
-      ['BuySellHistory'],
-    );
-    if (result.rows.length >= 1) {
-      return;
-    }
-
-    // IF NOT EXISTS 구문 쓰니까 코드 포맷팅 깨지네 ㅋㅋㅋ
-    // 안쓴다 안써...
-    const result2 = await query(
-      db.current,
-      `CREATE TABLE BuySellHistory
+    console.log(
+      await query(
+        db.current,
+        `CREATE TABLE IF NOT EXISTS BuySellHistory
        (
            Id              INTEGER PRIMARY KEY,
            BuySellType     TEXT    NOT NULL,
@@ -217,25 +205,53 @@ export function BuySellHistory(): JSX.Element {
            StockCount      INTEGER NOT NULL,
            StockPrice      INTEGER NOT NULL
        );`,
-      [],
+        [],
+      ),
     );
-    console.log(result2);
   }
 
-  async function recreateTable() {
+  async function createStockAccountTableIfNotExists() {
     if (!db.current) {
-      console.error('db current null');
+      console.error('db not ready');
       return;
     }
 
-    const result1 = await query(
-      db.current,
-      'DROP TABLE IF EXISTS BuySellHistory;',
-      [],
+    console.log(
+      await query(
+        db.current,
+        `CREATE TABLE IF NOT EXISTS StockAccount
+       (
+           Id              INTEGER PRIMARY KEY,
+           AccountName     TEXT    NOT NULL
+       );`,
+        [],
+      ),
     );
-    console.log(result1);
+  }
 
+  async function dropAllTablesIfExist() {
+    if (!db.current) {
+      console.error('db not ready');
+      return;
+    }
+
+    console.log(
+      await query(db.current, 'DROP TABLE IF EXISTS BuySellHistory;', []),
+    );
+
+    console.log(
+      await query(db.current, 'DROP TABLE IF EXISTS StockAccount;', []),
+    );
+  }
+
+  async function createAllTablesAndMigrate() {
     await createTableIfNotExists();
+    await createStockAccountTableIfNotExists();
+  }
+
+  async function recreateTable() {
+    await dropAllTablesIfExist();
+    await createAllTablesAndMigrate();
   }
 
   useEffect(() => {
@@ -253,7 +269,7 @@ export function BuySellHistory(): JSX.Element {
       }
       //console.log('Sqlite ok');
 
-      await createTableIfNotExists();
+      await createAllTablesAndMigrate();
 
       const selectResult = await query(
         db.current,

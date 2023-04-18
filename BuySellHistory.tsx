@@ -120,26 +120,55 @@ function refreshSummary(newHistoryList: BuySellEntryProps[]) {
   return newSummaryDict;
 }
 
-function query(db: SQLiteDatabase, sqlStatement: string, args: any[]) {
-  return new Promise<ResultSet>((resolve, reject) => {
-    db.transaction(
-      tx => {
-        tx.executeSql(
-          sqlStatement,
-          args,
-          (transaction, resultSet) => {
-            resolve(resultSet);
-          },
-          (transaction, error) => {
-            reject(error);
-          },
-        );
-      },
-      error => {
-        reject(error);
-      },
-    );
+async function query(db: SQLiteDatabase, sqlStatement: string, args: any[]) {
+  console.log(db);
+  return new Promise<ResultSet>(async (resolve, reject) => {
+    try {
+      await db.transaction(async tx => {
+        console.log(tx);
+        const result = await tx.executeSql(sqlStatement, args);
+        if (result) {
+          console.log(result[1]);
+        } else {
+          console.log('result empty');
+        }
+        resolve(result[1]);
+      });
+    } catch (error) {
+      reject(error);
+    }
   });
+
+  // const tx = await db.transaction(_ => {});
+  // console.log(tx);
+  // const r = await tx.executeSql(sqlStatement, args);
+  // return r[1];
+
+  // return new Promise<ResultSet>(resolve => {
+  //   db.transaction(
+  //     tx => {
+  //       tx.executeSql(
+  //         sqlStatement,
+  //         args,
+  //         (transaction, resultSet) => {
+  //           console.log('oh 3');
+  //           resolve(resultSet);
+  //         },
+  //         (transaction, error) => {
+  //           console.log('oh 2');
+  //           //reject(error);
+  //           throw error;
+  //         },
+  //       );
+  //     },
+  //     error => {
+  //       console.log('oh 100');
+  //       console.log(JSON.stringify(error));
+  //       //reject(error);
+  //       throw error;
+  //     },
+  //   );
+  // });
 }
 
 export function BuySellHistory(): JSX.Element {
@@ -187,7 +216,7 @@ export function BuySellHistory(): JSX.Element {
     }
   }
 
-  async function createTableIfNotExists() {
+  async function createBuySellHistoryTableIfNotExists() {
     if (!db.current) {
       console.error('db not ready');
       return;
@@ -244,9 +273,34 @@ export function BuySellHistory(): JSX.Element {
     );
   }
 
+  async function addAccountIdColumn() {
+    if (!db.current) {
+      console.error('db not ready');
+      return;
+    }
+
+    try {
+      console.log(
+        await query(
+          db.current,
+          'ALTER TABLE BuySellHistory ADD AccountId INTEGER;',
+          [],
+        ),
+      );
+    } catch (e) {
+      console.error('here it comes~');
+      if (e) {
+        console.error(JSON.stringify(e));
+      } else {
+        console.error('undefined error...');
+      }
+    }
+  }
+
   async function createAllTablesAndMigrate() {
-    await createTableIfNotExists();
+    await createBuySellHistoryTableIfNotExists();
     await createStockAccountTableIfNotExists();
+    await addAccountIdColumn();
   }
 
   async function recreateTable() {
@@ -255,7 +309,57 @@ export function BuySellHistory(): JSX.Element {
   }
 
   useEffect(() => {
-    //SQLite.enablePromise(true);
+    SQLite.DEBUG(true);
+    SQLite.enablePromise(true);
+
+    async function startDb() {
+      db.current = await SQLite.openDatabase({name: 'Lonely.db'});
+      if (!db.current) {
+        console.error('db.current null');
+        return;
+      }
+      await createAllTablesAndMigrate();
+
+      const selectResult = await query(
+        db.current,
+        'SELECT * FROM BuySellHistory;',
+        [],
+      );
+      //console.log(selectResult);
+
+      setDbLoadedCount(selectResult.rows.length);
+
+      //console.log('Sqlite result 2');
+      //console.log(JSON.stringify(selectResult));
+      let curHistoryList: BuySellEntryProps[] = [];
+      let curSummaryDict: Map<string, SummaryEntryProps> = new Map();
+      for (let i = 0; i < selectResult.rows.length; i++) {
+        const item = selectResult.rows.item(i);
+
+        //console.log(JSON.stringify(item));
+
+        const r = await addFunc(curHistoryList, curSummaryDict, {
+          buySellType: parseInt(item.BuySellType, 10),
+          key: item.Id,
+          stockName: item.StockName,
+          stockPrice: item.StockPrice,
+          stockCount: item.StockCount,
+          transactionDate: new Date(item.TransactionDate),
+        });
+        if (r) {
+          curHistoryList = r.newHistoryList;
+          curSummaryDict = r.newSummaryDict;
+        }
+      }
+
+      setHistoryList(curHistoryList);
+      setSummaryDict(curSummaryDict);
+    }
+
+    startDb().then(_ => {});
+
+    return;
+
     db.current = SQLite.openDatabase(
       {name: 'Lonely.db'},
       okCallback,

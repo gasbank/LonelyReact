@@ -241,7 +241,7 @@ export function BuySellHistory(): JSX.Element {
   useEffect(() => {
     //SQLite.enablePromise(true);
     db.current = SQLite.openDatabase(
-      {name: 'LonelyDb'},
+      {name: 'Lonely.db'},
       okCallback,
       errorCallback,
     );
@@ -311,10 +311,10 @@ export function BuySellHistory(): JSX.Element {
 
   return (
     <>
-      <Text style={styles.sectionTitle}>잔고</Text>
+      {/*<Text style={styles.sectionTitle}>잔고</Text>*/}
       <Summary summaryDict={summaryDict} onSelect={onSelectStockSummary} />
 
-      <Text style={styles.sectionTitle}>기록</Text>
+      {/*<Text style={styles.sectionTitle}>기록</Text>*/}
 
       <NewBuySellEntry
         key={12345}

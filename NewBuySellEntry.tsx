@@ -45,9 +45,10 @@ export const NewBuySellEntry = forwardRef((props: NewBuySellEntryProps, _) => {
     <>
       <View style={styles.rowContainer}>
         <TextInput
-          placeholder="종목명"
+          placeholder="종목코드"
           value={stockName}
           onChangeText={setStockName}
+          keyboardType="number-pad"
           style={styles.flexOne}
         />
         <TextInput

@@ -12,16 +12,19 @@ export function SummaryEntry(
   const [currentRatio, setCurrentRatio] = useState<number | undefined>(
     undefined,
   );
+  const [showDetails, setShowDetails] = useState(false);
   const appState = useRef(AppState.currentState);
 
   const avgPrice =
     props.stockCount > 0 ? props.accumPrice / props.stockCount : 0;
+
   const avgPriceStr =
     avgPrice > 0
       ? avgPrice.toLocaleString('ko', {
           maximumFractionDigits: 0,
         })
       : '---';
+
   const fixedIncomeStr = props.accumEarn.toLocaleString('ko', {
     maximumFractionDigits: 0,
   });
@@ -86,37 +89,53 @@ export function SummaryEntry(
 
   const totalDiff = closePrice ? (closePrice - avgPrice) * props.stockCount : 0;
 
+  const currentRatioSafe = currentRatio || 0;
+  const currentRatioSafeStr = currentRatioSafe.toLocaleString('ko', {
+    style: 'percent',
+    minimumFractionDigits: 2,
+  });
+  const currentRatioSafeStrEmoji = currentRatioSafe > 0 ? '🔥' : '⚠️';
+
+  const detailsSection = showDetails ? (
+    <View style={styles.rowContainer}>
+      <Text style={styles.flexOne}>
+        현재가: {closePrice ? closePrice.toLocaleString('ko') : '???'}원
+      </Text>
+      <Text style={styles.flexOne}>평단가: {avgPriceStr}원</Text>
+      <Text style={styles.flexOne}>확정수익: {fixedIncomeStr}원</Text>
+    </View>
+  ) : (
+    <></>
+  );
+
+  function onPress() {
+    setShowDetails(!showDetails);
+    props.onSelect(props.stockName);
+  }
+
   return (
-    <Pressable onPress={() => props.onSelect(props.stockName)}>
+    <Pressable onPress={onPress}>
       <View style={styles.colContainer}>
-        <View style={styles.rowContainer}>
-          <Text style={[styles.flexOne, styles.stockName]}>
-            {friendlyName} {props.stockCount.toLocaleString('ko')}주
-          </Text>
-        </View>
-        <View style={[styles.rowContainer, styles.gap20]}>
-          <Text style={[styles.totalPrice]}>
-            {(totalPrice || 0).toLocaleString('ko')}원
-          </Text>
+        <View style={[styles.rowContainer, styles.gap10]}>
           <View style={styles.colContainer}>
+            <Text style={[styles.flexOne, styles.stockName]}>
+              {friendlyName} {props.stockCount.toLocaleString('ko')}주
+            </Text>
+
+            <Text style={[styles.totalPrice]}>
+              {(totalPrice || 0).toLocaleString('ko')}원
+            </Text>
+          </View>
+          <View style={styles.colContainer}>
+            <Text style={styles.flexOne}>
+              {currentRatioSafeStrEmoji} {currentRatioSafeStr}
+            </Text>
             <Text style={styles.flexOne}>
               {(totalDiff || 0).toLocaleString('ko')}원
             </Text>
-            <Text style={styles.flexOne}>
-              {(currentRatio || 0).toLocaleString('ko', {
-                style: 'percent',
-                minimumFractionDigits: 2,
-              })}
-            </Text>
           </View>
         </View>
-        <View style={styles.rowContainer}>
-          <Text style={styles.flexOne}>
-            현재가: {closePrice ? closePrice.toLocaleString('ko') : '???'}원
-          </Text>
-          <Text style={styles.flexOne}>평단가: {avgPriceStr}원</Text>
-          <Text style={styles.flexOne}>확정수익: {fixedIncomeStr}원</Text>
-        </View>
+        {detailsSection}
       </View>
     </Pressable>
   );
